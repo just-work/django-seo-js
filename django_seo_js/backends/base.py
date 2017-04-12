@@ -3,6 +3,12 @@ import requests
 from django.http import HttpResponse
 from django_seo_js import settings
 
+try:
+    from django.utils.deprecation import MiddlewareMixin
+    cls = MiddlewareMixin
+except:
+    cls = object
+
 
 IGNORED_HEADERS = frozenset((
     'connection', 'keep-alive', 'proxy-authenticate',
@@ -11,9 +17,12 @@ IGNORED_HEADERS = frozenset((
 ))
 
 
-class SelectedBackend(object):
+class SelectedBackend(cls):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, get_response=None, *args, **kwargs):
+        if object is not cls:
+            super(SelectedBackend, self).__init__(get_response=get_response)
+
         module_path = settings.BACKEND
         backend_module = importlib.import_module(".".join(module_path.split(".")[:-1]))
         self.backend = getattr(backend_module, module_path.split(".")[-1])()
